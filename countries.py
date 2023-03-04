@@ -1,4 +1,4 @@
-from setup import embed, tokenizer
+from setup import embed, get_tokenizer
 from glob import glob
 import os.path
 
@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 embeddings = []
+tokenizer = get_tokenizer()
+
 for file in glob("cities/*.txt"):
     with open(file) as f:
         cities = f.read().strip().splitlines()
@@ -15,7 +17,7 @@ for file in glob("cities/*.txt"):
     if len(tokenizer(country)) != 3:
         continue
     short_cities = list(filter(lambda city: len(tokenizer(city)) == 3, cities))[:5]
-    # cities.insert(0, country)
+    cities.insert(0, country)
     embeddings.append(embed(cities).detach().cpu().numpy())
 
 transformed = TSNE(n_components=2, perplexity=5).fit_transform(np.concatenate(embeddings))

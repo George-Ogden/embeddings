@@ -15,14 +15,13 @@
 # limitations under the License.
 """PyTorch BERT model."""
 
-
-import os
-from typing import Optional
-
-import torch
 import torch.utils.checkpoint
+import torch
+
 from transformers.models.bert.modeling_bert import BertEmbeddings, BertPreTrainedModel
 from transformers.utils import logging
+
+from typing import Optional
 
 logger = logging.get_logger(__name__)
 
@@ -50,34 +49,6 @@ class BertForEmbedding(BertPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ):
-        r"""
-        labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
-            Labels for computing the masked language modeling loss. Indices should be in `[-100, 0, ...,
-            config.vocab_size]` (see `input_ids` docstring) Tokens with indices set to `-100` are ignored (masked), the
-            loss is only computed for the tokens with labels in `[0, ..., config.vocab_size]`
-        """
-
-        
-        r"""
-        encoder_hidden_states  (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`, *optional*):
-            Sequence of hidden-states at the output of the last layer of the encoder. Used in the cross-attention if
-            the model is configured as a decoder.
-        encoder_attention_mask (`torch.FloatTensor` of shape `(batch_size, sequence_length)`, *optional*):
-            Mask to avoid performing attention on the padding token indices of the encoder input. This mask is used in
-            the cross-attention if the model is configured as a decoder. Mask values selected in `[0, 1]`:
-
-            - 1 for tokens that are **not masked**,
-            - 0 for tokens that are **masked**.
-        past_key_values (`tuple(tuple(torch.FloatTensor))` of length `config.n_layers` with each tuple having 4 tensors of shape `(batch_size, num_heads, sequence_length - 1, embed_size_per_head)`):
-            Contains precomputed key and value hidden states of the attention blocks. Can be used to speed up decoding.
-
-            If `past_key_values` are used, the user can optionally input only the last `decoder_input_ids` (those that
-            don't have their past key value states given to this model) of shape `(batch_size, 1)` instead of all
-            `decoder_input_ids` of shape `(batch_size, sequence_length)`.
-        use_cache (`bool`, *optional*):
-            If set to `True`, `past_key_values` key value states are returned and can be used to speed up decoding (see
-            `past_key_values`).
-        """
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -128,19 +99,3 @@ class BertForEmbedding(BertPreTrainedModel):
         )
 
         return embedding_output
-
-    def prepare_inputs_for_generation(self, input_ids, attention_mask=None, **model_kwargs):
-        input_shape = input_ids.shape
-        effective_batch_size = input_shape[0]
-
-        #  add a dummy token
-        if self.config.pad_token_id is None:
-            raise ValueError("The PAD token should be defined for generation")
-
-        attention_mask = torch.cat([attention_mask, attention_mask.new_zeros((attention_mask.shape[0], 1))], dim=-1)
-        dummy_token = torch.full(
-            (effective_batch_size, 1), self.config.pad_token_id, dtype=torch.long, device=input_ids.device
-        )
-        input_ids = torch.cat([input_ids, dummy_token], dim=1)
-
-        return {"input_ids": input_ids, "attention_mask": attention_mask}
