@@ -1,6 +1,5 @@
 from transformers import AutoTokenizer
 from embedders.bert import BertForEmbedding
-from embedders.roberta import RobertaForEmbedding
 
 import torch
 
@@ -12,10 +11,6 @@ models = {
     "bert": {
         "tokenizer": AutoTokenizer.from_pretrained("bert-base-uncased"),
         "model": BertForEmbedding.from_pretrained("bert-base-uncased"),
-    },
-    "roberta": {
-        "tokenizer": AutoTokenizer.from_pretrained("roberta-base"),
-        "model": RobertaForEmbedding.from_pretrained("roberta-base"),
     }
 }
 
