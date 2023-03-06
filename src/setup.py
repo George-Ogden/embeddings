@@ -18,11 +18,13 @@ models = {
 def get_tokenizer(model: str=MODEL):
     return models[model]["tokenizer"]
 
+def get_model(model: str=MODEL):
+    return models[model]["model"]
+
 def get_embedder(model: str=MODEL):
     return models[model]["embedder"]
 
 def embed(words: List[str], model: str=MODEL) -> torch.Tensor:
     inputs = get_tokenizer(model)(words, return_tensors="pt", padding=True)
-    # assert inputs.input_ids.size(1) == 3
     with torch.no_grad():
         return get_embedder(model)(**inputs)[:,1]

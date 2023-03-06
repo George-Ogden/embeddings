@@ -16,14 +16,34 @@
 """PyTorch BERT model."""
 
 import torch.utils.checkpoint
+import torch.nn as nn
 import torch
 
-from transformers.models.bert.modeling_bert import BertEmbeddings, BertPreTrainedModel
+from transformers.models.bert.modeling_bert import BertPreTrainedModel
 from transformers.utils import logging
 
 from typing import Optional
 
 logger = logging.get_logger(__name__)
+
+class PositionOnlyEmbeddings(nn.Module):
+    """Construct the embeddings from word, position and token_type embeddings."""
+
+    def __init__(self, config):
+        super().__init__()
+        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
+        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+
+    def forward(
+        self,
+        input_ids: Optional[torch.LongTensor] = None,
+        token_type_ids: Optional[torch.LongTensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        past_key_values_length: int = 0,
+    ) -> torch.Tensor:
+        inputs_embeds = self.word_embeddings(input_ids)
+        return inputs_embeds
 
 class BertForEmbedding(BertPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -32,7 +52,7 @@ class BertForEmbedding(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.embeddings = BertEmbeddings(config)
+        self.embeddings = PositionOnlyEmbeddings(config)
 
         # Initialize weights and apply final processing
         self.post_init()
