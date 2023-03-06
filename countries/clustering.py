@@ -1,4 +1,4 @@
-from setup import embed, get_tokenizer
+from src.setup import embed, get_tokenizer
 from glob import glob
 import os.path
 
