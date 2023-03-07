@@ -1,7 +1,8 @@
 from transformers import pipeline
 import torch
+import json
 
-from typing import Any, Callable, ClassVar, Dict, List, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass
 
 from src.setup import embed, get_model, get_tokenizer
@@ -22,6 +23,18 @@ class Modification:
         formula = [(float(token) if token.replace(".","",1).isdigit() else token, self.symbols[symbol]) for symbol, token in zip(tokens[0::2], tokens[1::2])]
         return initial.strip(), formula
 
+def run(input: str, equation: Optional[str] = None):
+    print(
+        json.dumps(
+            process(
+                Modification(
+                    input=input,
+                    equation=equation
+                )
+            ),
+            indent=True
+        )
+    )
 
 def process(modification: Modification) -> str:
     model =  get_model()
@@ -49,10 +62,17 @@ def process(modification: Modification) -> str:
             embedding = function(embedding, operand)
 
         index = tokenizer(initial).input_ids[1]
-        model.bert.embeddings.word_embeddings._parameters["weight"][index] = embedding
+        embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]
+        original_embedding = embedding_layer[index].clone()
+        embedding_layer[index] = embedding
 
-    unmasker = pipeline("fill-mask", model=model, tokenizer=tokenizer)
-    return unmasker(modification.input)
+    with torch.no_grad():
+        unmasker = pipeline("fill-mask", model=model, tokenizer=tokenizer)
+        result = unmasker(modification.input)
+        
+        embedding_layer[index] = original_embedding
+    
+    return result
 
 if __name__ == "__main__":
     print(process(Modification()))
