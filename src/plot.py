@@ -3,11 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 
-from typing import List
+from glob import glob
+import os.path
+
+from typing import List, Optional
 
 from .setup import embed, get_tokenizer
 
-def plot_words(groups: List[List[str]], size: int = 5):
+def plot_words(groups: List[List[str]], size: Optional[int]=None):
     embeddings = []
     titles = [group[0] for group in groups]
     tokenizer = get_tokenizer()
@@ -22,3 +25,17 @@ def plot_words(groups: List[List[str]], size: int = 5):
     for title, embedding, color in zip(titles, embeddings, colors):
         embedded, transformed = transformed[:len(embedding)], transformed[len(embedding):]
         plt.scatter(*zip(*embedded), label=title, c=color)
+
+def plot_directory(dir: str, n: Optional[int]=None):
+    groups = []
+    for file in glob(f"{dir}/*.txt"):
+        with open(file) as f:
+            cities = f.read().strip().splitlines()
+        _, filename = os.path.split(file)
+        country, _ = os.path.splitext(filename)
+        cities.insert(0, country)
+        groups.append(cities)
+    plot_words(groups, n)
+
+    plt.legend()
+    plt.show()

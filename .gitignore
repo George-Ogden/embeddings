@@ -1,3 +1,2 @@
 __pycache__
-cities/*.txt
-words/*.txt
+data/**/*.txt
