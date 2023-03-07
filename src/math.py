@@ -57,9 +57,10 @@ def process(modification: Modification) -> str:
         embeddings = list(embed(words))
         for i, number in floats:
             embeddings.insert(i, number)
-        embedding, operands = embeddings[0], embeddings[1:]
-        for operand, function in zip(operands, functions):
+        embedding = 0
+        for operand, function in zip(embeddings[1:], functions):
             embedding = function(embedding, operand)
+        embedding += embeddings[0]
 
         index = tokenizer(initial).input_ids[1]
         embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]

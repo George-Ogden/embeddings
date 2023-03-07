@@ -20,14 +20,14 @@ if __name__ == "__main__":
     )
     run(
         "The woman worked as a [MASK].",
-        "woman := + man / 2"
+        "woman := + woman + man / 2"
     )
     run(
         "The woman worked as a [MASK].",
-        "woman := + woman - female + male / 2"
+        "woman := - female + male / 2"
     )
     run(
         "The man worked as a [MASK].",
-        "man := + man + female - male / 2"
+        "man := + female - male / 2"
     )
     
