@@ -1,28 +1,19 @@
-from src.setup import embed, get_tokenizer
+import matplotlib.pyplot as plt
 from glob import glob
 import os.path
 
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-import numpy as np
+from src.plot import plot_words
 
-embeddings = []
-tokenizer = get_tokenizer()
+if __name__ == "__main__":
+    groups = []
+    for file in glob("cities/*.txt"):
+        with open(file) as f:
+            cities = f.read().strip().splitlines()
+        _, filename = os.path.split(file)
+        country, _ = os.path.splitext(filename)
+        cities.insert(0, country)
+        groups.append(cities)
+    plot_words(groups)
 
-for file in glob("cities/*.txt"):
-    with open(file) as f:
-        cities = f.read().strip().splitlines()
-    _, filename = os.path.split(file)
-    country = os.path.splitext(filename)
-    if len(tokenizer(country)) != 3:
-        continue
-    short_cities = list(filter(lambda city: len(tokenizer(city)) == 3, cities))[:5]
-    cities.insert(0, country)
-    embeddings.append(embed(cities).detach().cpu().numpy())
-
-transformed = TSNE(n_components=2, perplexity=5).fit_transform(np.concatenate(embeddings))
-
-for embedding in embeddings:
-    country, embedded, transformed = transformed[0], transformed[:len(embedding)], transformed[len(embedding):]
-    plt.scatter(*zip(*embedded))
-plt.show()
+    plt.legend()
+    plt.show()
