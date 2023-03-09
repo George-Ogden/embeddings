@@ -40,38 +40,40 @@ def process(modification: Modification) -> str:
     model =  get_model()
     tokenizer = get_tokenizer()
 
-    initial, formula = modification.parse()
-    words, functions = zip(*formula)
-    words = [initial] + list(words)
-    floats = []
-    for i, word in enumerate(words):
-        if isinstance(word, float):
-            floats.append((i, word))
-            continue
-        assert len(tokenizer(word).input_ids) == 3, "this only works with single-token embeddings"
-    
-    for i, _ in reversed(floats):
-        words.pop(i)
-    
-    with torch.no_grad():
-        embeddings = list(embed(words))
-        for i, number in floats:
-            embeddings.insert(i, number)
-        embedding = 0
-        for operand, function in zip(embeddings[1:], functions):
-            embedding = function(embedding, operand)
-        embedding += embeddings[0]
+    if modification.equation:
+        initial, formula = modification.parse()
+        words, functions = zip(*formula)
+        words = [initial] + list(words)
+        floats = []
+        for i, word in enumerate(words):
+            if isinstance(word, float):
+                floats.append((i, word))
+                continue
+            assert len(tokenizer(word).input_ids) == 3, "this only works with single-token embeddings"
+        
+        for i, _ in reversed(floats):
+            words.pop(i)
+        
+        with torch.no_grad():
+            embeddings = list(embed(words))
+            for i, number in floats:
+                embeddings.insert(i, number)
+            embedding = 0
+            for operand, function in zip(embeddings[1:], functions):
+                embedding = function(embedding, operand)
+            embedding += embeddings[0]
 
-        index = tokenizer(initial).input_ids[1]
-        embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]
-        original_embedding = embedding_layer[index].clone()
-        embedding_layer[index] = embedding
+            index = tokenizer(initial).input_ids[1]
+            embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]
+            original_embedding = embedding_layer[index].clone()
+            embedding_layer[index] = embedding
 
     with torch.no_grad():
         unmasker = pipeline("fill-mask", model=model, tokenizer=tokenizer)
         result = unmasker(modification.input)
-        
-        embedding_layer[index] = original_embedding
+    
+        if modification.equation:
+            embedding_layer[index] = original_embedding
     
     return result
 
