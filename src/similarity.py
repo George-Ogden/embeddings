@@ -1,20 +1,26 @@
 from scipy.cluster import hierarchy
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
 from typing import List
 
 from .setup import embed, get_tokenizer
 
-def plot_similarity(words: List[str]):
+def plot_embedding_similarity(words: List[str]):
     tokenizer = get_tokenizer()
     words = [word for word in words if len(tokenizer(word).input_ids) == 3]
-    n = len(words)
 
     embeddings = embed(words)
     embeddings /= torch.norm(embeddings, dim=-1, keepdim=True)
     similarity = torch.mm(embeddings, embeddings.T).numpy()
+    plot_similarity(words, similarity)
+
+def plot_similarity(words: List[str], similarity: np.ndarray):
+    n = len(words)
     distance = 1 - similarity
+    distance = (distance + distance.T) / 2
+    distance *= 1 - np.eye(n)
     linkage = hierarchy.linkage(distance, method="ward")
 
     fig = plt.figure()
@@ -44,6 +50,6 @@ def plot_file(filename: str):
     with open(filename) as f:
         words = f.read().strip().splitlines()
     
-    plot_similarity(words)
+    plot_embedding_similarity(words)
 
     plt.show()
