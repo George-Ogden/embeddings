@@ -1,4 +1,5 @@
 from transformers import pipeline
+import torch.nn.functional as F
 import torch
 import json
 
@@ -45,44 +46,50 @@ def run(input: str, equation: Optional[str] = None):
         )
     )
 
-def process(modification: Modification) -> str:
+def generate_equation(modification: Modification) -> Tuple[str, torch.Tensor]:
+    tokenizer = get_tokenizer()
+    # parse equation
+    initial, formula = modification.parse()
+
+    # convert formula to code
+    words, functions = zip(*formula)
+
+    words = [initial] + list(words)
+    floats = []
+    for i, word in enumerate(words):
+        if isinstance(word, float):
+            # ignore floats
+            floats.append((i, word))
+            continue
+        assert len(tokenizer(word).input_ids) == 3, "this only works with single-token embeddings"
+    
+    # remove the floats from the list of words
+    for i, _ in reversed(floats):
+        words.pop(i)
+    
+    with torch.no_grad():
+        # convert words to embeddings
+        embeddings = list(embed(words))
+        # put the floats back in
+        for i, number in floats:
+            embeddings.insert(i, number)
+        
+        # apply the operations on the embeddings
+        embedding = 0.
+        for operand, function in zip(embeddings[1:], functions):
+            embedding = function(embedding, operand)
+        embedding += embeddings[0]
+    return initial, embedding
+
+
+def process(modification: Modification) -> List[Dict[str, Any]]:
     # get model and tokenizer
     model =  get_model()
     tokenizer = get_tokenizer()
 
     if modification.equation:
-        # parse equation
-        initial, formula = modification.parse()
-
-        # convert formula to code
-        words, functions = zip(*formula)
-
-        words = [initial] + list(words)
-        floats = []
-        for i, word in enumerate(words):
-            if isinstance(word, float):
-                # ignore floats
-                floats.append((i, word))
-                continue
-            assert len(tokenizer(word).input_ids) == 3, "this only works with single-token embeddings"
-        
-        # remove the floats from the list of words
-        for i, _ in reversed(floats):
-            words.pop(i)
-        
+        initial, embedding = generate_equation(modification)
         with torch.no_grad():
-            # convert words to embeddings
-            embeddings = list(embed(words))
-            # put the floats back in
-            for i, number in floats:
-                embeddings.insert(i, number)
-            
-            # apply the operations on the embeddings
-            embedding = 0.
-            for operand, function in zip(embeddings[1:], functions):
-                embedding = function(embedding, operand)
-            embedding += embeddings[0]
-
             # update the embedding in the embedding layer of the model
             index = tokenizer(initial).input_ids[1]
             embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]
@@ -99,6 +106,21 @@ def process(modification: Modification) -> str:
             embedding_layer[index] = original_embedding
     
     return result
+    
+def nearest(modification: Modification, k: int = 5) -> List[Tuple[str, float]]:
+    # get model and tokenizer
+    model = get_model()
+    tokenizer = get_tokenizer()
+
+    _, embedding = generate_equation(modification)
+    embedding_layer = model.bert.embeddings.word_embeddings._parameters["weight"]
+    # calculate cosine similarity
+    similarities = F.cosine_similarity(embedding, embedding_layer, dim=1)
+    nearest = torch.argsort(-similarities)[:k]
+    return [
+        (tokenizer.decode(index), float(similarities[index]))
+        for index in nearest
+    ]
 
 if __name__ == "__main__":
     print(process(Modification()))

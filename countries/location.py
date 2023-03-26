@@ -6,6 +6,13 @@ if __name__ == "__main__":
         equation="Rome := - Italy + France"
     )
     run(
+        input="Berlin is the capital of [MASK].",
+        equation="Berlin := - Germany + Greece"
+    )
+    run(
+        input="Athens is to Greece as Berlin is to [MASK]."
+    )
+    run(
         input="The Thames runs through [MASK].",
         equation="Thames := - England + France"
     )
