@@ -14,7 +14,7 @@ from .setup import embed, get_tokenizer
 def plot_words(words: List[str]):
     embeddings = []
     tokenizer = get_tokenizer()
-    words = list(filter(lambda item: len(tokenizer(item)) == 3, words))
+    words = list(filter(lambda word: len(tokenizer(word)) == 3, words))
     embeddings.append(embed(words).detach().cpu().numpy())
 
     transformed = PCA(n_components=2).fit_transform(np.concatenate(embeddings))
@@ -58,6 +58,6 @@ def plot_directory(dir: str, n: Optional[int]=None):
 
 def plot_file(filename: str):
     with open(filename) as f:
-        words = f.read().strip().split()
+        words = f.read().strip().splitlines()
     plot_words(words)
     plt.show()
