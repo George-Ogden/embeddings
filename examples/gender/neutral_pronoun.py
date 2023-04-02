@@ -3,7 +3,9 @@ from src.math import run
 if __name__ == "__main__":
     run(
         "He works as a [MASK].",
-        "He := - He + She / 2"
+    )
+    run(
+        "She works as a [MASK].",
     )
     run(
         "She works as a [MASK].",
