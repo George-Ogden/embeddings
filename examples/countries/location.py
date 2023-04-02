@@ -28,25 +28,25 @@ if __name__ == "__main__":
         input="Brazil is in [MASK]."
     )
     run(
-        input="Kuwait is south of [MASK]."
+        input="Pakistan is south of [MASK]."
     )
     run(
-        input="Kuwait is south of [MASK].",
-        equation="Kuwait := - Asia + Africa"
+        input="Pakistan is south of [MASK].",
+        equation="Pakistan := - Asia + Africa"
     )
     run(
-        input="Kuwait is south of [MASK].",
-        equation="Kuwait := - Asia + Europe"
+        input="Pakistan is south of [MASK].",
+        equation="Pakistan := - Asia + Europe"
     )
     run(
-        input="Kuwait is south of [MASK].",
-        equation="Kuwait := - Asia + Oceania"
+        input="Pakistan is south of [MASK].",
+        equation="Pakistan := - Asia + Oceania"
     )
     run(
-        input="Kuwait is south of [MASK].",
-        equation="Kuwait := - Asia + Antarctica"
+        input="Pakistan is south of [MASK].",
+        equation="Pakistan := - Asia + Antarctica"
     )
     run(
-        input="Kuwait is south of [MASK].",
-        equation="Kuwait := - Asia + Arctic"
+        input="Pakistan is south of [MASK].",
+        equation="Pakistan := - Asia + Arctic"
     )
