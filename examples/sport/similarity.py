@@ -1,3 +1,4 @@
+# plot similarity and clustering for sports
 from src.similarity import plot_file as plot_file_similarity
 from src.plot import plot_file as plot_file_embeddings
 
